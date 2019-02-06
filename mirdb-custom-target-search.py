@@ -2,6 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
 import time
+from collections import OrderedDict
+import pandas as pd
 
 # Define url
 url = 'http://mirdb.org/miRDB/custom.html'
@@ -43,15 +45,18 @@ time.sleep(1)
 firefox.find_element_by_xpath('/html/body/form/input[2]').click()
 
 details = firefox.find_elements_by_name('.submit')  # the first is the "Return" button, the others are "Target Details"
+
+targets_list = []
+
 # loops through all targets
 for i in range(1, len(details)):
     details[i].click()
     html = firefox.page_source
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, 'html.parser')  # parses the html with bs4 to scrape data from html tags
     seeds = soup.find_all('font', {'color': '#0000FF'})  # find seeds by color
     number_of_seeds = len(seeds)
     links = soup.find_all('a', href=True)
-    mirna_link = 'mirdb.org'+links[1]['href']  # builds a link for the miRNA page
+    mirna_link = 'www.mirdb.org'+links[1]['href']  # builds a link for the miRNA page
     mirna_name = links[1].font.text  # gets miRNA name
 
     # usually the score is in cell #7, but sometimes there is an extra row for miRNA previous name
@@ -61,6 +66,18 @@ for i in range(1, len(details)):
     else:                       # if it isn't then score should be in cell #9
         score = table[9].text
 
+    # stores the above information in a dictionary
+    targets_info = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
+    targets_info['sequence'] = 'test{}'.format(i)
+    targets_info['score'] = score
+    targets_info['#seeds'] = number_of_seeds
+    targets_info['mirna'] = mirna_name
+    targets_info['link'] = mirna_link
+
+    # adds the dictionary to a list of dictionaries containing the target's data
+    targets_list.append(targets_info)
+
+
     print('Number of seeds: {}'.format(number_of_seeds))
     print('miRNA link: {}'.format(mirna_link))
     print('miRNA name: {}'.format(mirna_name))
@@ -69,6 +86,8 @@ for i in range(1, len(details)):
 
     firefox.back()  # goes back to prediction page
     details = firefox.find_elements_by_name('.submit')  # find all buttons again
-    
+
+dataframe = pd.DataFrame(targets_list)  # creates a pandas DataFrame("table") with targets information
+dataframe.to_excel('custom_target_search.xlsx', index=False)  # saves the dataframe to an Excel file
 firefox.close()
 
