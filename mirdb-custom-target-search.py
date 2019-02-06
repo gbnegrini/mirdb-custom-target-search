@@ -51,11 +51,24 @@ for i in range(1, len(details)):
     seeds = soup.find_all('font', {'color': '#0000FF'})  # find seeds by color
     number_of_seeds = len(seeds)
     links = soup.find_all('a', href=True)
-    mirna_link = 'mirdb.org'+links[1]['href']  # link for the miRNA page
-    mirna_name = links[1].font.text  # miRNA name
+    mirna_link = 'mirdb.org'+links[1]['href']  # builds a link for the miRNA page
+    mirna_name = links[1].font.text  # gets miRNA name
+
+    # usually the score is in cell #7, but sometimes there is an extra row for miRNA previous name
+    table = soup.find_all('td')
+    if table[7].text.isdigit():  # so check if cell #7 text is a digit
+        score = table[7].text
+    else:                       # if it isn't then score should be in cell #9
+        score = table[9].text
+
     print('Number of seeds: {}'.format(number_of_seeds))
     print('miRNA link: {}'.format(mirna_link))
     print('miRNA name: {}'.format(mirna_name))
+    print('Score: {}'.format(score))
     print('-------------------------------------')
+
     firefox.back()  # goes back to prediction page
     details = firefox.find_elements_by_name('.submit')  # find all buttons again
+    
+firefox.close()
+
