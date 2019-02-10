@@ -30,6 +30,9 @@ species = 'Human'
 # Options for submission type: miRNA Sequence, mRNA Target Sequence
 submission = 'mRNA Target Sequence'
 
+# Score cut-off
+score_cutoff = 0
+
 # Read sequences
 try:
     with open(fasta_file, 'rU') as handle:
@@ -94,20 +97,6 @@ try:
                     break
                 html = firefox.page_source
                 soup = BeautifulSoup(html, 'html.parser')  # parses the html with bs4 to scrape data from html tags
-                seeds = soup.find_all('font', {'color': '#0000FF'})  # find seeds by color
-                try:
-                    number_of_seeds = len(seeds)
-                except AttributeError:
-                    number_of_seeds = None
-                links = soup.find_all('a', href=True)
-                try:
-                    mirna_link = 'www.mirdb.org'+links[1]['href']  # builds a link for the miRNA page
-                except AttributeError:
-                    mirna_link = None
-                try:
-                    mirna_name = links[1].font.text  # gets miRNA name
-                except AttributeError:
-                    mirna_name = None
 
                 # usually the score is in cell #7, but sometimes there is an extra row for miRNA previous name
                 table = soup.find_all('td')
@@ -118,21 +107,45 @@ try:
                         score = table[9].text
                 except AttributeError:
                     score = None
+                    failed['sequence'] = fasta[sequence].id
+                    failed['reason'] = 'Score not found.'
 
-                # stores the above information in a dictionary
-                targets_info = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
-                targets_info['sequence'] = fasta[sequence].id
-                targets_info['score'] = score
-                targets_info['#seeds'] = number_of_seeds
-                targets_info['mirna'] = mirna_name
-                targets_info['link'] = mirna_link
+                if score is not None and int(score) >= score_cutoff:
 
-                # adds the dictionary to a list of dictionaries containing the target's data
-                targets_list.append(targets_info)
+                    seeds = soup.find_all('font', {'color': '#0000FF'})  # find seeds by color
+                    try:
+                        number_of_seeds = len(seeds)
+                    except AttributeError:
+                        number_of_seeds = None
+                    links = soup.find_all('a', href=True)
+                    try:
+                        mirna_link = 'www.mirdb.org'+links[1]['href']  # builds a link for the miRNA page
+                    except AttributeError:
+                        mirna_link = None
+                    try:
+                        mirna_name = links[1].font.text  # gets miRNA name
+                    except AttributeError:
+                        mirna_name = None
 
-                firefox.back()  # goes back to prediction page
-                time.sleep(1)
-                details = firefox.find_elements_by_name('.submit')  # find all buttons again
+                    # stores the above information in a dictionary
+                    targets_info = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
+                    targets_info['sequence'] = fasta[sequence].id
+                    targets_info['score'] = score
+                    targets_info['#seeds'] = number_of_seeds
+                    targets_info['mirna'] = mirna_name
+                    targets_info['link'] = mirna_link
+
+                    # adds the dictionary to a list of dictionaries containing the target's data
+                    targets_list.append(targets_info)
+
+                    firefox.back()  # goes back to prediction page
+                    time.sleep(1)
+                    details = firefox.find_elements_by_name('.submit')  # find all buttons again
+
+                else:
+                    firefox.back()  # goes back to prediction page
+                    time.sleep(1)
+                    details = firefox.find_elements_by_name('.submit')  # find all buttons again
         else:
             print('\nFailed to search {}. Sequence length out of range ({} nt).'.format(fasta[sequence].id, len(fasta[sequence])))
             failed['sequence'] = fasta[sequence].id
@@ -147,5 +160,5 @@ finally:
     print('\nResults saved to {}'.format(output_file))
     dataframe_failed = pd.DataFrame(failed_list)
     dataframe_failed.to_excel('failed.xlsx', index=False)
-    #firefox.close()
+    firefox.close()
 
