@@ -44,8 +44,10 @@ options.add_argument('--headless')
 firefox = webdriver.Firefox()
 
 targets_list = []
+failed_list = []
 try:
     for sequence in range(0, num_seq):
+        failed = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
         if 100 <= len(fasta[sequence]) <= 30000:  # miRDB range restriction
 
             print('\rSearching targets for sequence: #{} - {}'.format(sequence, fasta[sequence].id), end='', flush=True)
@@ -73,9 +75,12 @@ try:
                 firefox.find_element_by_xpath('/html/body/form/input[2]').click()
             except TimeoutException:
                 print('\nTimed out waiting for {} results.'.format(fasta[sequence].id))
+                failed['sequence'] = fasta[sequence].id
+                failed['reason'] = 'Timed out waiting for results.'
+                failed_list.append(failed)
                 break
 
-            time.sleep(2)
+            time.sleep(1)
             details = firefox.find_elements_by_name('.submit')  # the first is the "Return" button, the others are "Target Details"
 
             # loops through all targets
@@ -83,6 +88,9 @@ try:
                 try:
                     details[i].click()
                 except IndexError:
+                    failed['sequence'] = fasta[sequence].id
+                    failed['reason'] = 'IndexError: {}'.format(i)
+                    failed_list.append(failed)
                     break
                 html = firefox.page_source
                 soup = BeautifulSoup(html, 'html.parser')  # parses the html with bs4 to scrape data from html tags
@@ -123,9 +131,13 @@ try:
                 targets_list.append(targets_info)
 
                 firefox.back()  # goes back to prediction page
+                time.sleep(1)
                 details = firefox.find_elements_by_name('.submit')  # find all buttons again
         else:
-            print('\nFailed to search {}. Sequence length exceeded ({} nt).'.format(fasta[sequence].id, len(fasta[sequence])))
+            print('\nFailed to search {}. Sequence length out of range ({} nt).'.format(fasta[sequence].id, len(fasta[sequence])))
+            failed['sequence'] = fasta[sequence].id
+            failed['reason'] = 'Sequence length: {}'.format(len(fasta[sequence]))
+            failed_list.append(failed)
 except:
     traceback.print_exc()
     print('\nAn exception has occurred. Number of sequences searched until now: {}'.format(sequence))
@@ -133,5 +145,7 @@ finally:
     dataframe = pd.DataFrame(targets_list)  # creates a pandas DataFrame("table") with targets information
     dataframe.to_excel(output_file, index=False)  # saves the dataframe to an Excel file
     print('\nResults saved to {}'.format(output_file))
+    dataframe_failed = pd.DataFrame(failed_list)
+    dataframe_failed.to_excel('failed.xlsx', index=False)
     #firefox.close()
 
