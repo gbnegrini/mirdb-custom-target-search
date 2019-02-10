@@ -11,40 +11,50 @@ from collections import OrderedDict
 import pandas as pd
 from Bio import SeqIO
 import traceback
+import argparse
+
+parser = argparse.ArgumentParser(description='Automated miRDB custom microRNA target prediction search')
+parser.add_argument('inp', type=str, help='Input FASTA file with target sequences')
+parser.add_argument('out', type=str, help='Name for output file')
+parser.add_argument('sp', type=str, help='Species: Human, Rat, Mouse, Chicken, Dog')
+parser.add_argument('--cutoff', type=int, help='Score cut-off (default: 90)', default=90)
+parser.add_argument('--visible', type=bool, help='Set browser window visibility during the process (default: True)', default=True)
+args = parser.parse_args()
 
 # Define url
 url = 'http://mirdb.org/miRDB/custom.html'
 
 # Define input fasta file
-fasta_file = 'SRA_circRNAs.uniq.fa'
+fasta_file = args.inp
 
 # Define output Excel file
-output_file = 'custom_target_search.xlsx'
-
-# Define number of sequences to search
-num_seq = 200
+output_file = args.out+'.xlsx'
 
 # Options for species: Human, Rat, Mouse, Chicken, Dog
-species = 'Human'
+species = args.sp
 
 # Options for submission type: miRNA Sequence, mRNA Target Sequence
 submission = 'mRNA Target Sequence'
 
 # Score cut-off
-score_cutoff = 0
+score_cutoff = args.cutoff
 
 # Read sequences
 try:
     with open(fasta_file, 'rU') as handle:
         fasta = list(SeqIO.parse(handle, 'fasta'))
+        num_seq = len(fasta)
 except IOError:
     print('ERROR: could not read file.')
 
 # Instantiates the browser (Firefox is easier to use)
-options = Options()
-options.add_argument('--headless')
-#firefox = webdriver.Firefox(options=options)
-firefox = webdriver.Firefox()
+if args.visible:
+    firefox = webdriver.Firefox()
+else:
+    options = Options()
+    options.add_argument('--headless')
+    firefox = webdriver.Firefox(options=options)
+
 
 targets_list = []
 failed_list = []
