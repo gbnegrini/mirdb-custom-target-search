@@ -5,7 +5,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
-import time
 from bs4 import BeautifulSoup
 from collections import OrderedDict
 import pandas as pd
@@ -13,12 +12,15 @@ from Bio import SeqIO
 import traceback
 import argparse
 
-parser = argparse.ArgumentParser(description='Automated miRDB custom microRNA target prediction search')
+parser = argparse.ArgumentParser(description='Automated miRDB custom microRNA target prediction search: '
+                                             '\nThis script uses a webdriver to access the miRDB website and search'
+                                             ' for microRNA targets in user given mRNA sequences.')
 parser.add_argument('inp', type=str, help='Input FASTA file with target sequences')
 parser.add_argument('out', type=str, help='Name for output file')
-parser.add_argument('sp', type=str, help='Species: Human, Rat, Mouse, Chicken, Dog')
-parser.add_argument('--cutoff', type=int, help='Score cut-off (default: 90)', default=90)
-parser.add_argument('--visible', type=bool, help='Set browser window visibility during the process (default: True)', default=True)
+parser.add_argument('sp', type=str, help='Species <Human | Rat | Mouse | Chicken | Dog>')
+parser.add_argument('-c', '--cutoff', type=int, help='Score cut-off <int> (default: 90)', default=90)
+parser.add_argument('-v', '--visible', action='store_true', help='Shows browser window during the process '
+                                                                            '(default: False)', default=False)
 args = parser.parse_args()
 
 # Define url
@@ -63,7 +65,7 @@ try:
         failed = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
         if 100 <= len(fasta[sequence]) <= 30000:  # miRDB range restriction
 
-            print('\rSearching targets for sequence: #{} - {}'.format(sequence, fasta[sequence].id), end='', flush=True)
+            print('\rSearching targets for sequence: {}/{} - {}'.format(sequence, num_seq, fasta[sequence].id), end='', flush=True)
 
             # Gets the desired page
             firefox.get(url)
@@ -91,20 +93,31 @@ try:
                 failed['sequence'] = fasta[sequence].id
                 failed['reason'] = 'Timed out waiting for results.'
                 failed_list.append(failed)
-                break
+                continue
 
-            time.sleep(1)
+            html = firefox.page_source
+            soup = BeautifulSoup(html, 'html.parser')  # parses the html with bs4 to scrape data from html tags
+            score_list = []
+            rows = soup.find('table', id='table1').find('tbody').find_all('tr')
+            # checks in the results table which target scores are equal or greater than the cut-off
+            # then saves the indexes in a list
+            for i in range(1, len(rows)):
+                cells = rows[i].find_all('td')
+                if int(cells[2].text) >= score_cutoff:
+                    score_list.append(i)
+
             details = firefox.find_elements_by_name('.submit')  # the first is the "Return" button, the others are "Target Details"
 
-            # loops through all targets
-            for i in range(1, len(details)):
+            # only checks the results that passed the cut-off
+            for i in score_list:
                 try:
                     details[i].click()
                 except IndexError:
                     failed['sequence'] = fasta[sequence].id
                     failed['reason'] = 'IndexError: {}'.format(i)
                     failed_list.append(failed)
-                    break
+                    continue
+
                 html = firefox.page_source
                 soup = BeautifulSoup(html, 'html.parser')  # parses the html with bs4 to scrape data from html tags
 
@@ -120,42 +133,35 @@ try:
                     failed['sequence'] = fasta[sequence].id
                     failed['reason'] = 'Score not found.'
 
-                if score is not None and int(score) >= score_cutoff:
+                seeds = soup.find_all('font', {'color': '#0000FF'})  # find seeds by color
+                try:
+                    number_of_seeds = len(seeds)
+                except AttributeError:
+                    number_of_seeds = None
+                links = soup.find_all('a', href=True)
+                try:
+                    mirna_link = 'www.mirdb.org'+links[1]['href']  # builds a link for the miRNA page
+                except AttributeError:
+                    mirna_link = None
+                try:
+                    mirna_name = links[1].font.text  # gets miRNA name
+                except AttributeError:
+                    mirna_name = None
 
-                    seeds = soup.find_all('font', {'color': '#0000FF'})  # find seeds by color
-                    try:
-                        number_of_seeds = len(seeds)
-                    except AttributeError:
-                        number_of_seeds = None
-                    links = soup.find_all('a', href=True)
-                    try:
-                        mirna_link = 'www.mirdb.org'+links[1]['href']  # builds a link for the miRNA page
-                    except AttributeError:
-                        mirna_link = None
-                    try:
-                        mirna_name = links[1].font.text  # gets miRNA name
-                    except AttributeError:
-                        mirna_name = None
+                # stores the above information in a dictionary
+                targets_info = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
+                targets_info['sequence'] = fasta[sequence].id
+                targets_info['score'] = score
+                targets_info['#seeds'] = number_of_seeds
+                targets_info['mirna'] = mirna_name
+                targets_info['link'] = mirna_link
 
-                    # stores the above information in a dictionary
-                    targets_info = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
-                    targets_info['sequence'] = fasta[sequence].id
-                    targets_info['score'] = score
-                    targets_info['#seeds'] = number_of_seeds
-                    targets_info['mirna'] = mirna_name
-                    targets_info['link'] = mirna_link
+                # adds the dictionary to a list of dictionaries containing the target's data
+                targets_list.append(targets_info)
 
-                    # adds the dictionary to a list of dictionaries containing the target's data
-                    targets_list.append(targets_info)
+                firefox.back()  # goes back to prediction page
+                details = firefox.find_elements_by_name('.submit')  # find all buttons again
 
-                    firefox.back()  # goes back to prediction page
-                    time.sleep(1)
-                    details = firefox.find_elements_by_name('.submit')  # find all buttons again
-
-                else:
-                    firefox.back()  # goes back to prediction page
-                    time.sleep(1)
-                    details = firefox.find_elements_by_name('.submit')  # find all buttons again
         else:
             print('\nFailed to search {}. Sequence length out of range ({} nt).'.format(fasta[sequence].id, len(fasta[sequence])))
             failed['sequence'] = fasta[sequence].id
