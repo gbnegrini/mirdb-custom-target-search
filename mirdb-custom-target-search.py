@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser(description='Automated miRDB custom microRNA ta
 parser.add_argument('inp', type=str, help='Input FASTA file with target sequences')
 parser.add_argument('out', type=str, help='Name for output file')
 parser.add_argument('sp', type=str, help='Species <Human | Rat | Mouse | Chicken | Dog>')
-parser.add_argument('-c', '--cutoff', type=int, help='Score cut-off <int> (default: 90)', default=90)
+parser.add_argument('-c', '--cutoff', type=int, help='Score cut-off <int> (default: 80)', default=80)
 parser.add_argument('-v', '--visible', action='store_true', help='Shows browser window during the process '
                                                                             '(default: False)', default=False)
 args = parser.parse_args()
@@ -61,7 +61,7 @@ else:
 targets_list = []
 failed_list = []
 try:
-    for sequence in range(0, num_seq):
+    for sequence in range(num_seq):
         failed = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
         if 100 <= len(fasta[sequence]) <= 30000:  # miRDB range restriction
 
@@ -81,7 +81,11 @@ try:
             sequence_field.send_keys(fasta[sequence])
 
             # Clicks on the "Go" button
-            firefox.find_element_by_xpath('/html/body/table[2]/tbody/tr/td[3]/form/table/tbody/tr[5]/td/input[1]').click()
+            try:
+                firefox.find_element_by_xpath('/html/body/table[2]/tbody/tr/td[3]/form/table/tbody/tr[5]/td/input[1]').click()
+            except:
+                continue
+
             # Waits for the results
             timeout = 30
             try:
@@ -98,13 +102,19 @@ try:
             html = firefox.page_source
             soup = BeautifulSoup(html, 'html.parser')  # parses the html with bs4 to scrape data from html tags
             score_list = []
-            rows = soup.find('table', id='table1').find('tbody').find_all('tr')
-            # checks in the results table which target scores are equal or greater than the cut-off
-            # then saves the indexes in a list
-            for i in range(1, len(rows)):
-                cells = rows[i].find_all('td')
-                if int(cells[2].text) >= score_cutoff:
-                    score_list.append(i)
+            try:
+                rows = soup.find('table', id='table1').find('tbody').find_all('tr')
+                # checks in the results table which target scores are equal or greater than the cut-off
+                # then saves the indexes in a list
+                for i in range(1, len(rows)):
+                    cells = rows[i].find_all('td')
+                    if int(cells[2].text) >= score_cutoff:
+                        score_list.append(i)
+            except AttributeError:
+                failed['sequence'] = fasta[sequence].id
+                failed['reason'] = "Couldn't find table."
+                failed_list.append(failed)
+                continue
 
             details = firefox.find_elements_by_name('.submit')  # the first is the "Return" button, the others are "Target Details"
 
