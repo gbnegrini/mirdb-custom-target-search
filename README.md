@@ -18,6 +18,7 @@ On Windows, go to `Properties>Advanced System Settings>Environment Variables>Sys
 On Linux, you can run `export PATH=$PATH:/path-to-extracted-file/geckodriver` or simply `sudo mv geckodriver /usr/local/bin/`.
 
 - Requirements
+
 The script needs some Python packages such as: `Selenium`, `Beatiful Soup`, `pandas`. 
 
 You can install them as you wish with `pip install <package>` or `conda install <package>`.
@@ -47,7 +48,7 @@ The code generates two `.xlsx` output files: one contains the data related to ea
 
 - Example:
 ```
-./python python mirdb-custom-target-search.py my_sequences.fa my_sequences_out Human
+./python mirdb-custom-target-search.py my_sequences.fa my_sequences_out Human
 ```
 
 |             sequence             | score | #seeds |          mirna             |                           link                           |
