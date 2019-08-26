@@ -14,7 +14,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Automated miRDB custom microRNA target prediction search: '
                                              '\nThis script uses a webdriver to access the miRDB website and search'
-                                             ' for microRNA targets in user given mRNA sequences.')
+                                             ' for microRNA targets in user given RNA sequences.')
 parser.add_argument('inp', type=str, help='Input FASTA file with target sequences')
 parser.add_argument('out', type=str, help='Name for output file')
 parser.add_argument('sp', type=str, help='Species <Human | Rat | Mouse | Chicken | Dog>')
@@ -24,7 +24,7 @@ parser.add_argument('-v', '--visible', action='store_true', help='Shows browser 
 args = parser.parse_args()
 
 # Define url
-url = 'http://mirdb.org/miRDB/custom.html'
+url = 'http://www.mirdb.org/custom.html'
 
 # Define input fasta file
 fasta_file = args.inp
