@@ -1,0 +1,14 @@
+name: mirdb-search
+channels:
+- defaults
+- bioconda
+- conda
+- conda-forge
+- anaconda
+dependencies:
+- geckodriver
+- openpyxl
+- biopython==1.73
+- selenium==3.141.0
+- pandas==0.23.4
+- beautifulsoup4==4.7.1

@@ -29,8 +29,8 @@ url = 'http://www.mirdb.org/custom.html'
 # Define input fasta file
 fasta_file = args.inp
 
-# Define output Excel file
-output_file = args.out+'.xlsx'
+# Define output csv file
+output_file = args.out+'.csv'
 
 # Options for species: Human, Rat, Mouse, Chicken, Dog
 species = args.sp
@@ -43,7 +43,7 @@ score_cutoff = args.cutoff
 
 # Read sequences
 try:
-    with open(fasta_file, 'rU') as handle:
+    with open(fasta_file) as handle:
         fasta = list(SeqIO.parse(handle, 'fasta'))
         num_seq = len(fasta)
 except IOError:
@@ -65,7 +65,7 @@ try:
         failed = OrderedDict()  # OrderedDict() is used to preserve column order when creating dataframe
         if 100 <= len(fasta[sequence]) <= 30000:  # miRDB range restriction
 
-            print('\rSearching targets for sequence: {}/{} - {}'.format(sequence, num_seq, fasta[sequence].id), end='', flush=True)
+            print('\rSearching targets for sequence: {}/{} - {}'.format(sequence+1, num_seq, fasta[sequence].id), end='', flush=True)
 
             # Gets the desired page
             firefox.get(url)
@@ -182,9 +182,9 @@ except:
     print('\nAn exception has occurred. Number of sequences searched until now: {}'.format(sequence))
 finally:
     dataframe = pd.DataFrame(targets_list)  # creates a pandas DataFrame("table") with targets information
-    dataframe.to_excel(output_file, index=False)  # saves the dataframe to an Excel file
+    dataframe.to_csv(output_file, index=False)  # saves the dataframe to an csv file
     print('\nResults saved to {}'.format(output_file))
     dataframe_failed = pd.DataFrame(failed_list)
-    dataframe_failed.to_excel('failed.xlsx', index=False)
+    dataframe_failed.to_csv('failed.csv', index=False)
     firefox.close()
 
