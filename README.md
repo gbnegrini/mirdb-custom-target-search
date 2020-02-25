@@ -5,28 +5,16 @@ This script implements a Selenium WebDriver to automate the access to [miRDB - M
  - Mozilla Firefox
  
  You need to have Mozilla Firefox web browser installed and uptaded in your computer, which you can download [here](http://www.mozilla.org).
- - GeckoDriver
  
- Selenium needs GeckoDriver to control the web browser. 
- 
- First, [download](https://github.com/mozilla/geckodriver/releases) the compatible GeckoDriver version (32 or 64-bit) with your Mozilla Firefox browser (check with Alt>Help>About).
- 
- Then you need to set GeckoDriver into PATH environment variable:
-
-On Windows, go to `Properties>Advanced System Settings>Environment Variables>System Variables>PATH>Edit>New>Paste path to geckodriver.exe`. Or just paste `geckodriver.exe` in some folder already into PATH, like your Python or Anaconda folder.
-
-On Linux, you can run `export PATH=$PATH:/path-to-extracted-file/geckodriver` or simply `sudo mv geckodriver /usr/local/bin/`.
-
 - Requirements
 
-The script needs some Python packages such as: `Selenium`, `Beatiful Soup`, `pandas`. 
+Please create a conda environment with `conda env create -f requirements.yml`. This will install all packages and dependencies.
 
-You can install them as you wish with `pip install <package>` or `conda install <package>`.
-
-Or you can also install the exact development versions with `pip install -r requirements.txt` or `conda install --file requirements.txt`.
+Don't forget to activate the environment with `conda activate mirdb-search` before running the script.
 
 ## Running the script
 - Usage:
+
 ```
 ./python mirdb-custom-target-search.py [-h] [-c CUTOFF] [-v] inp out sp
 
@@ -44,7 +32,7 @@ optional arguments:
 
 ```
 
-The code generates two `.xlsx` output files: one contains the data related to each mRNA sequence provided (sequence name, target score, number of seeds, microRNA name and microRNA info page link) and the other (`failed.xlsx`) is a record of which sequences coundn't be search, most commonly due to miRDB sequence lenght limitation (100 to 30,000 bases long).
+The code generates two `.csv` output files: one contains the data related to each mRNA sequence provided (sequence name, target score, number of seeds, microRNA name and microRNA info page link) and the other (`failed.csv`) is a record of which sequences coundn't be search, most commonly due to miRDB sequence lenght limitation (100 to 30,000 bases long).
 
 - Example:
 ```
