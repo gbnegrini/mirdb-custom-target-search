@@ -1,3 +1,7 @@
 .idea/
 geckodriver/
-geckodriver.log
+.vscode/
+*.log
+*.db
+*.csv
+*.fa
