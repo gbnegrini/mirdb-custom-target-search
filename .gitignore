@@ -4,4 +4,3 @@ geckodriver/
 *.log
 *.db
 *.csv
-*.fa

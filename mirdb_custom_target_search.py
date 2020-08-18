@@ -206,7 +206,7 @@ if __name__ == "__main__":
                     crawler.driver.back()
             else:
                 print(f'\nFailed to search {sequence.id}. Sequence length out of range ({len(sequence)} nt).')
-                logging.exception(f"{sequence.id}\t{len(sequence)}")
+                logging.error(f"{sequence.id} length ({len(sequence)} nt) out of range (100 - 30000 nt)")
     except:
         logging.exception("Error")
         print(f'\nAn exception has occurred while searching: {sequence.id}')

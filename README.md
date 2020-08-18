@@ -1,27 +1,42 @@
 # Automated miRDB-search of microRNA targets/seeds in mRNA sequences
-This script implements a Selenium WebDriver to automate the access to [miRDB - MicroRNA Target Prediction and Functional Study Database](http://mirdb.org/) and search for microRNAs targets/seeds present in the given mRNA sequences.
+This script implements a Selenium WebDriver to automate the access to [miRDB - MicroRNA Target Prediction and Functional Study Database](http://mirdb.org/) and search for microRNAs targets/seeds present in custom mRNA sequences.
 
-## Getting started
- - Mozilla Firefox
+## Requirements
+
+- Mozilla Firefox
  
- You need to have Mozilla Firefox web browser installed and uptaded in your computer, which you can download [here](http://www.mozilla.org).
- 
-- Requirements
+  - You need to have Mozilla Firefox web browser installed and uptaded in your computer, which you can download [here](http://www.mozilla.org).
 
-Please create a conda environment with `conda env create -f requirements.yml`. This will install all packages and dependencies.
+- Python
+  - version 3
 
-Don't forget to activate the environment with `conda activate mirdb-search` before running the script.
+- Packages and libraries
+  - geckodriver
+  - openpyxl
+  - biopython
+  - selenium
+  - pandas
+  - beautifulsoup4
+
+You can easily install packages and libraries by creating a conda environment with:
+
+ `conda env create -f requirements.yml`. 
+
+If so, don't forget to activate the environment with `conda activate mirdb-search` before running the script.
 
 ## Running the script
-- Usage:
+
 
 ```
-./python mirdb-custom-target-search.py [-h] [-c CUTOFF] [-v] inp out sp
+python mirdb_custom_target_search.py [-h] [-c CUTOFF] [-v]
+                                     inp out {Human,Rat,Mouse,Chicken,Dog}
+
 
 positional arguments:
   inp                   Input FASTA file with target sequences
   out                   Name for output file
-  sp                    Species <Human | Rat | Mouse | Chicken | Dog>
+  {Human,Rat,Mouse,Chicken,Dog}
+                        Species
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -32,18 +47,17 @@ optional arguments:
 
 ```
 
-The code generates two `.csv` output files: one contains the data related to each mRNA sequence provided (sequence name, target score, number of seeds, microRNA name and microRNA info page link) and the other (`failed.csv`) is a record of which sequences coundn't be search, most commonly due to miRDB sequence lenght limitation (100 to 30,000 bases long).
-
-- Example:
+## Example:
 ```
-./python mirdb-custom-target-search.py my_sequences.fa my_sequences_out Human
+./python mirdb-custom-target-search.py test_data.fa test Human
 ```
 
-|             sequence             | score | #seeds |          mirna             |                           link                           |
-| -------------------------------- | ----- |--------|----------------------------|----------------------------------------------------------|
-| circRNA__15_68141945-68146700(+) |  92   |   3    |      hsa-miR-4306          |www.mirdb.org/cgi-bin/mature_mir.cgi?name=hsa-miR-4306|
-
-
+### Output
+|             sequence             | score | seeds |          mirna             |
+| -------------------------------- | ----- |--------|----------------------------|
+| NC_000010.11:87823625-87833625 |  96   |   10    |      hsa-miR-5692a          |
+| NC_000010.11:87823625-87833625 |94 |9 |hsa-miR-3613-3p|
+...|...|...|...|
 
 ## References
 - Weijun Liu and Xiaowei Wang (2019) Prediction of functional microRNA targets by integrative modeling of microRNA binding and target expression data. Genome Biology. 20:18.
