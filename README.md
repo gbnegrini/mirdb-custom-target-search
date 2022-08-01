@@ -1,4 +1,6 @@
 # Automated miRDB-search of microRNA targets/seeds in mRNA sequences
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgbnegrini%2Fmirdb-custom-target-search.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgbnegrini%2Fmirdb-custom-target-search?ref=badge_shield)
+
 This script implements a Selenium WebDriver to automate the access to [miRDB - MicroRNA Target Prediction and Functional Study Database](http://mirdb.org/) and search for microRNAs targets/seeds present in custom mRNA sequences.
 
 ## Requirements
@@ -62,3 +64,7 @@ optional arguments:
 ## References
 - Weijun Liu and Xiaowei Wang (2019) Prediction of functional microRNA targets by integrative modeling of microRNA binding and target expression data. Genome Biology. 20:18.
 - Nathan Wong and Xiaowei Wang (2015) miRDB: an online resource for microRNA target prediction and functional annotations. Nucleic Acids Research. 43(D1):D146-152.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgbnegrini%2Fmirdb-custom-target-search.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgbnegrini%2Fmirdb-custom-target-search?ref=badge_large)
